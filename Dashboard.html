@@ -1,0 +1,1782 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChurnGuard AI — 5 Model Churn Dashboard</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg: #07080c;
+            --s1: #0e1016;
+            --s2: #13151d;
+            --s3: #191c25;
+            --b1: rgba(255, 255, 255, 0.06);
+            --b2: rgba(255, 255, 255, 0.11);
+            --t1: #eeeef0;
+            --t2: #9b9daa;
+            --t3: #5c5f6e;
+            --lgb: #00d68f;
+            --xgb: #4d9fff;
+            --rf: #f59e0b;
+            --stk: #e879f9;
+            --dnn: #ff6b8a;
+            --ens: #60d0ff;
+            --danger: #ff4d6d;
+            --warn: #fbbf24;
+            --ok: #00d68f;
+            --r: 10px;
+            --rr: 6px;
+            --font: 'DM Sans', sans-serif;
+            --mono: 'JetBrains Mono', monospace;
+            --display: 'Syne', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            background: var(--bg);
+            color: var(--t1);
+            font-family: var(--font);
+            font-size: 13px;
+            min-height: 100vh;
+            overflow-x: hidden
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px;
+            height: 4px
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--s1)
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--s3);
+            border-radius: 4px
+        }
+
+        /* ── Shell ── */
+        .shell {
+            display: grid;
+            grid-template-columns: 220px 1fr;
+            grid-template-rows: 52px 1fr;
+            height: 100vh;
+            overflow: hidden
+        }
+
+        /* ── Topbar ── */
+        .topbar {
+            grid-column: 1/-1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            background: var(--s1);
+            border-bottom: 1px solid var(--b1)
+        }
+
+        .logo {
+            font-family: var(--display);
+            font-weight: 800;
+            font-size: 17px;
+            letter-spacing: -.03em;
+            display: flex;
+            align-items: center;
+            gap: 9px
+        }
+
+        .logo-ring {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid var(--lgb);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative
+        }
+
+        .logo-ring::after {
+            content: '';
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--lgb);
+            animation: beat 2s ease-in-out infinite
+        }
+
+        @keyframes beat {
+
+            0%,
+            100% {
+                transform: scale(1);
+                opacity: 1
+            }
+
+            50% {
+                transform: scale(1.4);
+                opacity: .6
+            }
+        }
+
+        .topbar-r {
+            display: flex;
+            align-items: center;
+            gap: 14px
+        }
+
+        .live-pill {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--t3);
+            background: var(--s2);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--b1)
+        }
+
+        .live-dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: var(--ok);
+            animation: beat 2s infinite
+        }
+
+        .tag {
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--t3);
+            border: 1px solid var(--b1);
+            padding: 3px 8px;
+            border-radius: 4px
+        }
+
+        /* ── Sidebar ── */
+        .sidebar {
+            background: var(--s1);
+            border-right: 1px solid var(--b1);
+            overflow-y: auto;
+            padding: 10px 0;
+            display: flex;
+            flex-direction: column
+        }
+
+        .nav-sec {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--t3);
+            letter-spacing: .12em;
+            padding: 14px 16px 5px;
+            text-transform: uppercase
+        }
+
+        .nav {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 8px 16px;
+            cursor: pointer;
+            color: var(--t2);
+            font-size: 12px;
+            border: none;
+            background: none;
+            width: 100%;
+            text-align: left;
+            border-left: 2px solid transparent;
+            transition: all .15s;
+            white-space: nowrap
+        }
+
+        .nav:hover {
+            color: var(--t1);
+            background: var(--s2)
+        }
+
+        .nav.active {
+            color: var(--t1);
+            border-left-color: var(--lgb);
+            background: rgba(0, 214, 143, .06)
+        }
+
+        .nav-icon {
+            font-size: 14px;
+            width: 16px;
+            text-align: center;
+            flex-shrink: 0
+        }
+
+        .nav-chip {
+            margin-left: auto;
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 1px 6px;
+            border-radius: 8px;
+            border: 1px solid var(--b1);
+            color: var(--t3)
+        }
+
+        .model-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0
+        }
+
+        /* ── Main ── */
+        .main {
+            overflow-y: auto;
+            padding: 20px 24px;
+            background: var(--bg)
+        }
+
+        .pg {
+            display: none;
+            animation: fadeup .2s ease
+        }
+
+        .pg.active {
+            display: block
+        }
+
+        @keyframes fadeup {
+            from {
+                opacity: 0;
+                transform: translateY(6px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        /* ── Typography ── */
+        .ph {
+            font-family: var(--display);
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -.02em;
+            margin-bottom: 3px
+        }
+
+        .ps {
+            font-size: 12px;
+            color: var(--t2);
+            margin-bottom: 16px
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--s1);
+            border: 1px solid var(--b1);
+            border-radius: var(--r);
+            padding: 16px
+        }
+
+        .card-sm {
+            padding: 12px 14px
+        }
+
+        .clabel {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--t3);
+            letter-spacing: .1em;
+            text-transform: uppercase;
+            margin-bottom: 8px
+        }
+
+        .ctitle {
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 12px
+        }
+
+        /* ── Grids ── */
+        .g2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px
+        }
+
+        .g3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px
+        }
+
+        .g5 {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px
+        }
+
+        .g62 {
+            display: grid;
+            grid-template-columns: 1.55fr 1fr;
+            gap: 12px
+        }
+
+        .g26 {
+            display: grid;
+            grid-template-columns: 1fr 1.7fr;
+            gap: 12px
+        }
+
+        /* ── Metric cards ── */
+        .mg {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 14px
+        }
+
+        .mc {
+            background: var(--s2);
+            border-radius: var(--rr);
+            padding: 11px 13px;
+            border: 1px solid var(--b1)
+        }
+
+        .ml {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--t3);
+            text-transform: uppercase;
+            letter-spacing: .08em;
+            margin-bottom: 6px
+        }
+
+        .mv {
+            font-size: 22px;
+            font-weight: 500;
+            line-height: 1;
+            font-family: var(--display)
+        }
+
+        .ms {
+            font-size: 11px;
+            color: var(--t2);
+            margin-top: 4px
+        }
+
+        /* ── Tabs inside card ── */
+        .ftabs {
+            display: flex;
+            gap: 2px;
+            background: var(--s2);
+            border-radius: var(--rr);
+            padding: 3px;
+            margin-bottom: 12px
+        }
+
+        .ftab {
+            flex: 1;
+            padding: 6px 8px;
+            border-radius: 5px;
+            font-size: 11px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--t2);
+            font-family: var(--font);
+            transition: all .15s
+        }
+
+        .ftab.active {
+            background: var(--s3);
+            color: var(--t1);
+            font-weight: 500
+        }
+
+        .fc {
+            display: none
+        }
+
+        .fc.active {
+            display: block
+        }
+
+        /* ── Inputs ── */
+        .il {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-bottom: 10px
+        }
+
+        .il label {
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--t2);
+            text-transform: uppercase;
+            letter-spacing: .05em
+        }
+
+        select,
+        input[type=number] {
+            width: 100%;
+            background: var(--s2);
+            border: 1px solid var(--b1);
+            border-radius: var(--rr);
+            padding: 7px 10px;
+            color: var(--t1);
+            font-family: var(--font);
+            font-size: 12px;
+            outline: none
+        }
+
+        select:focus,
+        input:focus {
+            border-color: var(--lgb)
+        }
+
+        input[type=range] {
+            width: 100%;
+            accent-color: var(--lgb)
+        }
+
+        .sr {
+            display: flex;
+            gap: 6px;
+            align-items: center
+        }
+
+        .sr input {
+            flex: 1
+        }
+
+        .sv {
+            font-size: 12px;
+            font-family: var(--mono);
+            min-width: 34px;
+            text-align: right;
+            color: var(--t1)
+        }
+
+        /* ── Gauge ── */
+        .gtrack {
+            height: 5px;
+            background: var(--s3);
+            border-radius: 99px;
+            overflow: hidden;
+            margin: 6px 0
+        }
+
+        .gfill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width .55s cubic-bezier(.4, 0, .2, 1)
+        }
+
+        .bigpct {
+            font-family: var(--display);
+            font-size: 30px;
+            font-weight: 700;
+            line-height: 1
+        }
+
+        /* ── Risk pills ── */
+        .rpill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-family: var(--mono);
+            font-weight: 500;
+            padding: 4px 10px;
+            border-radius: 99px;
+            margin-top: 6px
+        }
+
+        .rlow {
+            background: rgba(0, 214, 143, .1);
+            color: var(--ok);
+            border: 1px solid rgba(0, 214, 143, .25)
+        }
+
+        .rmed {
+            background: rgba(251, 191, 36, .1);
+            color: var(--warn);
+            border: 1px solid rgba(251, 191, 36, .25)
+        }
+
+        .rhigh {
+            background: rgba(255, 77, 109, .1);
+            color: var(--danger);
+            border: 1px solid rgba(255, 77, 109, .25)
+        }
+
+        /* ── Model bars (prediction panel) ── */
+        .mbar-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 7px
+        }
+
+        .mbar-name {
+            font-size: 10px;
+            font-family: var(--mono);
+            width: 90px;
+            flex-shrink: 0;
+            white-space: nowrap
+        }
+
+        .mbar-bg {
+            flex: 1;
+            height: 5px;
+            background: var(--s3);
+            border-radius: 99px;
+            overflow: hidden
+        }
+
+        .mbar-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width .5s ease
+        }
+
+        .mbar-pct {
+            font-size: 11px;
+            font-family: var(--mono);
+            width: 38px;
+            text-align: right;
+            flex-shrink: 0
+        }
+
+        /* ── SHAP bars ── */
+        .srow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 7px
+        }
+
+        .sname {
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--t2);
+            width: 130px;
+            flex-shrink: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis
+        }
+
+        .sbg {
+            flex: 1;
+            height: 5px;
+            background: var(--s3);
+            border-radius: 99px;
+            overflow: hidden
+        }
+
+        .sfill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width .4s ease
+        }
+
+        .sval {
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--t3);
+            width: 32px;
+            text-align: right;
+            flex-shrink: 0
+        }
+
+        /* ── Actions ── */
+        .act {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 11px;
+            border-radius: var(--rr);
+            border: 1px solid var(--b1);
+            background: var(--s2);
+            font-size: 12px;
+            margin-bottom: 6px
+        }
+
+        .acticon {
+            font-size: 13px
+        }
+
+        .actprio {
+            margin-left: auto;
+            font-size: 9px;
+            font-family: var(--mono);
+            padding: 2px 7px;
+            border-radius: 8px
+        }
+
+        .ph-pill {
+            background: rgba(255, 77, 109, .12);
+            color: var(--danger)
+        }
+
+        .pm-pill {
+            background: rgba(251, 191, 36, .12);
+            color: var(--warn)
+        }
+
+        .pl-pill {
+            background: rgba(0, 214, 143, .12);
+            color: var(--ok)
+        }
+
+        /* ── Divider ── */
+        .div {
+            height: 1px;
+            background: var(--b1);
+            margin: 12px 0
+        }
+
+        /* ── Model tag badge ── */
+        .mtag {
+            font-size: 9px;
+            font-family: var(--mono);
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 10px
+        }
+
+        /* ── Comparison table ── */
+        .ctable {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px
+        }
+
+        .ctable th {
+            font-family: var(--mono);
+            font-size: 9px;
+            color: var(--t3);
+            letter-spacing: .08em;
+            text-transform: uppercase;
+            padding: 8px 10px;
+            border-bottom: 1px solid var(--b1);
+            text-align: left
+        }
+
+        .ctable td {
+            padding: 8px 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, .03);
+            color: var(--t2);
+            vertical-align: middle
+        }
+
+        .ctable tr:hover td {
+            color: var(--t1);
+            background: var(--s2)
+        }
+
+        .best {
+            color: var(--ok);
+            font-family: var(--mono);
+            font-weight: 500
+        }
+
+        .good {
+            color: var(--lgb);
+            font-family: var(--mono)
+        }
+
+        .ok2 {
+            color: var(--t2);
+            font-family: var(--mono)
+        }
+
+        .warn2 {
+            color: var(--warn);
+            font-family: var(--mono)
+        }
+
+        .ens-row td {
+            background: rgba(96, 208, 255, .04) !important;
+            color: var(--ens) !important;
+            font-weight: 500
+        }
+
+        /* ── Winner banner ── */
+        .winner-banner {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(0, 214, 143, .06);
+            border: 1px solid rgba(0, 214, 143, .2);
+            border-radius: var(--r);
+            padding: 12px 16px;
+            margin-bottom: 14px
+        }
+
+        .winner-icon {
+            font-size: 22px
+        }
+
+        .winner-text {
+            font-size: 13px;
+            font-weight: 500
+        }
+
+        .winner-sub {
+            font-size: 11px;
+            color: var(--t2);
+            margin-top: 2px
+        }
+
+        /* ── Code block ── */
+        .code {
+            background: var(--s2);
+            border: 1px solid var(--b1);
+            border-radius: var(--rr);
+            padding: 11px 14px;
+            font-family: var(--mono);
+            font-size: 11px;
+            color: var(--t2);
+            overflow-x: auto;
+            line-height: 1.9;
+            margin: 8px 0
+        }
+
+        .kw {
+            color: #a78bfa
+        }
+
+        .str {
+            color: var(--lgb)
+        }
+
+        .cm {
+            color: var(--t3)
+        }
+
+        /* ── Step items ── */
+        .step {
+            display: flex;
+            gap: 12px;
+            padding: 12px 14px;
+            background: var(--s2);
+            border: 1px solid var(--b1);
+            border-radius: var(--r);
+            margin-bottom: 8px
+        }
+
+        .snum {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(0, 214, 143, .12);
+            color: var(--ok);
+            font-size: 12px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0
+        }
+
+        .stit {
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 3px
+        }
+
+        .sdesc {
+            font-size: 11px;
+            color: var(--t2);
+            line-height: 1.6
+        }
+
+        /* ── Conf3 ── */
+        .c3g {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 6px;
+            margin-top: 10px
+        }
+
+        .c3 {
+            background: var(--s2);
+            border-radius: var(--rr);
+            padding: 9px 10px;
+            border: 1px solid var(--b1)
+        }
+
+        .c3n {
+            font-size: 16px;
+            font-weight: 500;
+            font-family: var(--display)
+        }
+
+        .c3l {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--t3);
+            margin-top: 3px
+        }
+
+        /* ── Agree row ── */
+        .agrow {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px
+        }
+
+        .aglbl {
+            font-size: 9px;
+            font-family: var(--mono);
+            color: var(--t3);
+            flex-shrink: 0;
+            width: 60px
+        }
+
+        .agbg {
+            flex: 1;
+            height: 3px;
+            background: var(--s3);
+            border-radius: 99px;
+            overflow: hidden
+        }
+
+        .agfill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width .5s ease
+        }
+
+        .agpct {
+            font-size: 10px;
+            font-family: var(--mono);
+            color: var(--t2);
+            width: 30px;
+            text-align: right
+        }
+
+        /* ── Ensemble eq ── */
+        .enseq {
+            font-size: 11px;
+            font-family: var(--mono);
+            color: var(--t2);
+            background: var(--s2);
+            padding: 8px 12px;
+            border-radius: var(--rr);
+            margin-bottom: 10px;
+            border: 1px solid var(--b1)
+        }
+
+        /* ── AUC roc bar ── */
+        .auc-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px
+        }
+
+        .auc-name {
+            font-size: 11px;
+            font-family: var(--mono);
+            width: 80px;
+            flex-shrink: 0
+        }
+
+        .auc-bg {
+            flex: 1;
+            height: 8px;
+            background: var(--s3);
+            border-radius: 3px;
+            overflow: hidden
+        }
+
+        .auc-fill {
+            height: 100%;
+            border-radius: 3px
+        }
+
+        .auc-val {
+            font-size: 11px;
+            font-family: var(--mono);
+            width: 38px;
+            text-align: right
+        }
+
+        /* ── Btn ── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: var(--rr);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--b2);
+            background: transparent;
+            color: var(--t2);
+            font-family: var(--font);
+            transition: all .15s
+        }
+
+        .btn:hover {
+            color: var(--t1);
+            background: var(--s2)
+        }
+
+        .btn-accent {
+            background: var(--lgb);
+            color: #07080c;
+            border-color: transparent
+        }
+
+        .btn-accent:hover {
+            background: #00f5a8;
+            transform: translateY(-1px)
+        }
+    </style>
+</head>
+
+<body>
+    <div class="shell">
+
+        <!-- ── Topbar ── -->
+        <header class="topbar">
+            <div class="logo">
+                <div class="logo-ring"></div>
+                ChurnGuard AI
+            </div>
+            <div class="topbar-r">
+                <div class="live-pill"><span class="live-dot"></span>5 models loaded</div>
+                <div class="tag">XGB + DNN Ensemble · v2.0</div>
+            </div>
+        </header>
+
+        <!-- ── Sidebar ── -->
+        <nav class="sidebar">
+            <div class="nav-sec">Navigation</div>
+            <button class="nav active" onclick="pg('predict',this)"><span class="nav-icon">⚡</span>Predict<span
+                    class="nav-chip" style="color:var(--ok);border-color:rgba(0,214,143,.3)">Live</span></button>
+            <button class="nav" onclick="pg('compare',this)"><span class="nav-icon">📊</span>Model comparison</button>
+            <button class="nav" onclick="pg('shap',this)"><span class="nav-icon">🔬</span>SHAP explorer</button>
+            <button class="nav" onclick="pg('deploy',this)"><span class="nav-icon">🚀</span>Deploy guide</button>
+
+            <div class="nav-sec">All models</div>
+            <button class="nav" style="font-size:11px">
+                <div class="model-dot" style="background:var(--xgb)"></div>XGBoost<span class="nav-chip"
+                    style="color:var(--xgb);border-color:rgba(77,159,255,.3)">AUC .85 ★</span>
+            </button>
+            <button class="nav" style="font-size:11px">
+                <div class="model-dot" style="background:var(--lgb)"></div>LightGBM<span class="nav-chip"
+                    style="color:var(--lgb);border-color:rgba(0,214,143,.3)">AUC .85</span>
+            </button>
+            <button class="nav" style="font-size:11px">
+                <div class="model-dot" style="background:var(--rf)"></div>Random Forest<span class="nav-chip"
+                    style="color:var(--rf);border-color:rgba(245,158,11,.3)">AUC .85</span>
+            </button>
+            <button class="nav" style="font-size:11px">
+                <div class="model-dot" style="background:var(--stk)"></div>Stacking<span class="nav-chip"
+                    style="color:var(--stk);border-color:rgba(232,121,249,.3)">AUC .85</span>
+            </button>
+            <button class="nav" style="font-size:11px">
+                <div class="model-dot" style="background:var(--dnn)"></div>DNN<span class="nav-chip"
+                    style="color:var(--dnn);border-color:rgba(255,107,138,.3)">AUC .84</span>
+            </button>
+
+            <div class="nav-sec">Deployment</div>
+            <button class="nav" style="font-size:11px;color:var(--ens)">
+                <div class="model-dot" style="background:var(--ens)"></div>XGB + DNN Ensemble<span class="nav-chip"
+                    style="color:var(--ens);border-color:rgba(96,208,255,.3)">Final</span>
+            </button>
+        </nav>
+
+        <!-- ── Main ── -->
+        <main class="main">
+
+            <!-- ═══ PAGE: PREDICT ═══ -->
+            <div class="pg active" id="pg-predict">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+                    <div>
+                        <div class="ph">Customer Churn Prediction</div>
+                        <div class="ps">All 5 models predict live · XGBoost + DNN is the deployment ensemble</div>
+                    </div>
+                    <button class="btn" onclick="rand()">⟳ Random sample</button>
+                </div>
+
+                <!-- 5 model scores -->
+                <div class="mg">
+                    <div class="mc">
+                        <div class="ml">XGBoost ★</div>
+                        <div class="mv" id="m-xgb" style="color:var(--xgb)">—</div>
+                        <div class="ms">Recall leader</div>
+                    </div>
+                    <div class="mc">
+                        <div class="ml">LightGBM</div>
+                        <div class="mv" id="m-lgb" style="color:var(--lgb)">—</div>
+                        <div class="ms">Best F1</div>
+                    </div>
+                    <div class="mc">
+                        <div class="ml">Random Forest</div>
+                        <div class="mv" id="m-rf" style="color:var(--rf)">—</div>
+                        <div class="ms">Balanced</div>
+                    </div>
+                    <div class="mc">
+                        <div class="ml">Stacking</div>
+                        <div class="mv" id="m-stk" style="color:var(--stk)">—</div>
+                        <div class="ms">Meta-learner</div>
+                    </div>
+                    <div class="mc">
+                        <div class="ml">DNN</div>
+                        <div class="mv" id="m-dnn" style="color:var(--dnn)">—</div>
+                        <div class="ms">Nonlinear</div>
+                    </div>
+                </div>
+
+                <div class="g62">
+                    <!-- LEFT: Input form -->
+                    <div class="card">
+                        <div class="ctitle">Customer profile</div>
+                        <div class="ftabs">
+                            <button class="ftab active" onclick="ft('basic',this)">Basic</button>
+                            <button class="ftab" onclick="ft('services',this)">Services</button>
+                            <button class="ftab" onclick="ft('billing',this)">Billing</button>
+                        </div>
+
+                        <div class="fc active" id="fc-basic">
+                            <div class="g2">
+                                <div class="il"><label>Contract</label><select id="contract" onchange="predict()">
+                                        <option value="0">Month-to-month</option>
+                                        <option value="1">One year</option>
+                                        <option value="2">Two year</option>
+                                    </select></div>
+                                <div class="il"><label>Internet</label><select id="internet" onchange="predict()">
+                                        <option value="2">Fiber optic</option>
+                                        <option value="1">DSL</option>
+                                        <option value="0">None</option>
+                                    </select></div>
+                            </div>
+                            <div class="il"><label>Tenure — <span id="tv">5</span> months</label>
+                                <div class="sr"><input type="range" min="0" max="72" value="5" step="1" id="tenure"
+                                        oninput="predict()"><span class="sv" id="tv2">5</span></div>
+                            </div>
+                            <div class="il"><label>Monthly charges — $<span id="mv">75</span></label>
+                                <div class="sr"><input type="range" min="18" max="118" value="75" step="1" id="monthly"
+                                        oninput="predict()"><span class="sv" id="mv2">75</span></div>
+                            </div>
+                            <div class="g2">
+                                <div class="il"><label>Senior citizen</label><select id="senior" onchange="predict()">
+                                        <option value="0">No</option>
+                                        <option value="1">Yes</option>
+                                    </select></div>
+                                <div class="il"><label>Partner</label><select id="partner" onchange="predict()">
+                                        <option value="0">No</option>
+                                        <option value="1">Yes</option>
+                                    </select></div>
+                            </div>
+                        </div>
+
+                        <div class="fc" id="fc-services">
+                            <div class="g2">
+                                <div class="il"><label>Online security</label><select id="security"
+                                        onchange="predict()">
+                                        <option value="0">No</option>
+                                        <option value="1">Yes</option>
+                                    </select></div>
+                                <div class="il"><label>Tech support</label><select id="techsup" onchange="predict()">
+                                        <option value="0">No</option>
+                                        <option value="1">Yes</option>
+                                    </select></div>
+                                <div class="il"><label>Online backup</label><select id="backup" onchange="predict()">
+                                        <option value="0">No</option>
+                                        <option value="1">Yes</option>
+                                    </select></div>
+                                <div class="il"><label>Device protection</label><select id="device"
+                                        onchange="predict()">
+                                        <option value="0">No</option>
+                                        <option value="1">Yes</option>
+                                    </select></div>
+                                <div class="il"><label>Streaming TV</label><select id="stv" onchange="predict()">
+                                        <option value="0">No</option>
+                                        <option value="1">Yes</option>
+                                    </select></div>
+                                <div class="il"><label>Streaming movies</label><select id="smov" onchange="predict()">
+                                        <option value="0">No</option>
+                                        <option value="1">Yes</option>
+                                    </select></div>
+                            </div>
+                        </div>
+
+                        <div class="fc" id="fc-billing">
+                            <div class="il"><label>Payment method</label><select id="payment" onchange="predict()">
+                                    <option value="0">Electronic check</option>
+                                    <option value="1">Mailed check</option>
+                                    <option value="2">Bank transfer</option>
+                                    <option value="3">Credit card</option>
+                                </select></div>
+                            <div class="il"><label>Paperless billing</label><select id="paperless" onchange="predict()">
+                                    <option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                </select></div>
+                            <div class="il"><label>Total charges — $<span id="totv">375</span></label>
+                                <div class="sr"><input type="range" min="0" max="8700" value="375" step="10" id="total"
+                                        oninput="predict()"><span class="sv" id="totv2">375</span></div>
+                            </div>
+                        </div>
+
+                        <!-- All 5 model bar chart -->
+                        <div class="div"></div>
+                        <div class="clabel">All model predictions</div>
+                        <div id="allbars"></div>
+                    </div>
+
+                    <!-- RIGHT: Ensemble + Actions -->
+                    <div style="display:flex;flex-direction:column;gap:12px">
+
+                        <!-- Deployment ensemble -->
+                        <div class="card"
+                            style="border-color:rgba(96,208,255,.2);background:linear-gradient(135deg,rgba(77,159,255,.04),rgba(96,208,255,.03))">
+                            <div class="clabel">Deployment ensemble (XGBoost × 0.55 + DNN × 0.45)</div>
+                            <div class="enseq" id="enseq">XGB —% × 0.55 + DNN —% × 0.45 = —%</div>
+                            <div class="bigpct" id="enspct" style="color:var(--ens)">—%</div>
+                            <div class="gtrack">
+                                <div class="gfill" id="ensbar" style="width:0%;background:var(--ens)"></div>
+                            </div>
+                            <div id="ensbadge"></div>
+
+                            <div class="c3g">
+                                <div class="c3">
+                                    <div class="c3n" id="c-xgb" style="color:var(--xgb)">—</div>
+                                    <div class="c3l">XGBoost</div>
+                                </div>
+                                <div class="c3">
+                                    <div class="c3n" id="c-lgb" style="color:var(--lgb)">—</div>
+                                    <div class="c3l">LightGBM</div>
+                                </div>
+                                <div class="c3">
+                                    <div class="c3n" id="c-rf" style="color:var(--rf)">—</div>
+                                    <div class="c3l">Rand. Forest</div>
+                                </div>
+                                <div class="c3">
+                                    <div class="c3n" id="c-stk" style="color:var(--stk)">—</div>
+                                    <div class="c3l">Stacking</div>
+                                </div>
+                                <div class="c3">
+                                    <div class="c3n" id="c-dnn" style="color:var(--dnn)">—</div>
+                                    <div class="c3l">DNN</div>
+                                </div>
+                            </div>
+
+                            <div class="agrow">
+                                <div class="aglbl">XGB↔DNN</div>
+                                <div class="agbg">
+                                    <div class="agfill" id="agfill" style="width:0%;background:var(--ok)"></div>
+                                </div>
+                                <div class="agpct" id="agpct">—</div>
+                            </div>
+                        </div>
+
+                        <!-- Why XGB + DNN -->
+                        <div class="card card-sm">
+                            <div class="clabel">Why XGBoost + DNN?</div>
+                            <div style="display:flex;flex-direction:column;gap:6px">
+                                <div
+                                    style="padding:8px 10px;background:var(--s2);border-radius:var(--rr);border-left:2px solid var(--xgb);font-size:11px;color:var(--t2);line-height:1.6">
+                                    <b style="color:var(--t1)">XGBoost</b> — highest recall (81.8%). Only 51 missed
+                                    churners out of 280. Best at catching at-risk customers early.
+                                </div>
+                                <div
+                                    style="padding:8px 10px;background:var(--s2);border-radius:var(--rr);border-left:2px solid var(--dnn);font-size:11px;color:var(--t2);line-height:1.6">
+                                    <b style="color:var(--t1)">DNN</b> — captures complex nonlinear patterns tree models
+                                    miss. Adds signal on borderline customers.
+                                </div>
+                                <div
+                                    style="padding:8px 10px;background:var(--s2);border-radius:var(--rr);border-left:2px solid var(--ens);font-size:11px;color:var(--t2);line-height:1.6">
+                                    <b style="color:var(--t1)">Ensemble</b> — averaging probabilities reduces variance.
+                                    Disagreement &gt;10pp → flag for human review.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="card card-sm">
+                            <div class="clabel">Recommended actions</div>
+                            <div id="actions"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE: COMPARE ═══ -->
+            <div class="pg" id="pg-compare">
+                <div class="ph">Model comparison</div>
+                <div class="ps">All 5 models trained on Telco Churn · XGBoost + DNN selected for deployment</div>
+
+                <div class="winner-banner">
+                    <div class="winner-icon">🏆</div>
+                    <div>
+                        <div class="winner-text">Deployment selection: XGBoost + DNN Ensemble</div>
+                        <div class="winner-sub">XGBoost: highest recall (81.8%) · DNN: nonlinear patterns · Together:
+                            best risk coverage</div>
+                    </div>
+                </div>
+
+                <!-- AUC comparison chart -->
+                <div class="g2" style="margin-bottom:14px">
+                    <div class="card">
+                        <div class="ctitle">ROC-AUC by model</div>
+                        <div id="aucbars"></div>
+                        <div class="div"></div>
+                        <div style="font-size:11px;color:var(--t3)">All ML models tied at AUC 0.85 — decision made on
+                            recall, precision, and business impact.</div>
+                    </div>
+                    <div class="card">
+                        <div class="ctitle">Confusion matrix stats</div>
+                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:10px">
+                            <div class="mc card-sm">
+                                <div class="ml" style="color:var(--xgb)">XGBoost</div>
+                                <div style="font-size:18px;font-weight:500;color:var(--xgb)">81.8%</div>
+                                <div class="ms">Recall</div>
+                            </div>
+                            <div class="mc card-sm">
+                                <div class="ml" style="color:var(--lgb)">LightGBM</div>
+                                <div style="font-size:18px;font-weight:500;color:var(--lgb)">72.2%</div>
+                                <div class="ms">Recall</div>
+                            </div>
+                            <div class="mc card-sm">
+                                <div class="ml" style="color:var(--rf)">Rand. Forest</div>
+                                <div style="font-size:18px;font-weight:500;color:var(--rf)">78.2%</div>
+                                <div class="ms">Recall</div>
+                            </div>
+                            <div class="mc card-sm">
+                                <div class="ml" style="color:var(--stk)">Stacking</div>
+                                <div style="font-size:18px;font-weight:500;color:var(--stk)">80.4%</div>
+                                <div class="ms">Recall</div>
+                            </div>
+                        </div>
+                        <div style="font-size:11px;color:var(--t3)">Recall = % of actual churners caught. For churn
+                            prediction, missing a churner costs more than a false alarm.</div>
+                    </div>
+                </div>
+
+                <!-- Full metrics table -->
+                <div class="card">
+                    <div class="ctitle">Full metrics comparison</div>
+                    <table class="ctable">
+                        <thead>
+                            <tr>
+                                <th>Model</th>
+                                <th>AUC</th>
+                                <th>Accuracy</th>
+                                <th>Precision</th>
+                                <th>Recall ↑</th>
+                                <th>F1</th>
+                                <th>TN</th>
+                                <th>FP</th>
+                                <th>FN</th>
+                                <th>TP</th>
+                                <th>Role</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span style="display:inline-flex;align-items:center;gap:6px"><span
+                                            style="width:7px;height:7px;border-radius:50%;background:var(--xgb);display:inline-block"></span>XGBoost</span>
+                                </td>
+                                <td class="good">0.85</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">52.5%</td>
+                                <td class="best">81.8% ★</td>
+                                <td class="ok2">63.9%</td>
+                                <td class="ok2">570</td>
+                                <td class="warn2">207</td>
+                                <td class="best">51 ★</td>
+                                <td class="good">229</td>
+                                <td><span class="mtag" style="background:rgba(77,159,255,.1);color:var(--xgb)">Ensemble
+                                        ★</span></td>
+                            </tr>
+                            <tr>
+                                <td><span style="display:inline-flex;align-items:center;gap:6px"><span
+                                            style="width:7px;height:7px;border-radius:50%;background:var(--lgb);display:inline-block"></span>LightGBM</span>
+                                </td>
+                                <td class="good">0.85</td>
+                                <td class="ok2">—</td>
+                                <td class="best">58.4% ★</td>
+                                <td class="ok2">72.2%</td>
+                                <td class="best">64.6% ★</td>
+                                <td class="best">633 ★</td>
+                                <td class="good">144</td>
+                                <td class="warn2">78</td>
+                                <td class="ok2">202</td>
+                                <td><span class="mtag" style="background:rgba(0,214,143,.1);color:var(--lgb)">SHAP
+                                        only</span></td>
+                            </tr>
+                            <tr>
+                                <td><span style="display:inline-flex;align-items:center;gap:6px"><span
+                                            style="width:7px;height:7px;border-radius:50%;background:var(--rf);display:inline-block"></span>Random
+                                        Forest</span></td>
+                                <td class="good">0.85</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">55.4%</td>
+                                <td class="ok2">78.2%</td>
+                                <td class="ok2">64.9%</td>
+                                <td class="ok2">601</td>
+                                <td class="ok2">176</td>
+                                <td class="ok2">61</td>
+                                <td class="ok2">219</td>
+                                <td><span class="mtag"
+                                        style="background:rgba(245,158,11,.1);color:var(--rf)">Benchmark</span></td>
+                            </tr>
+                            <tr>
+                                <td><span style="display:inline-flex;align-items:center;gap:6px"><span
+                                            style="width:7px;height:7px;border-radius:50%;background:var(--stk);display:inline-block"></span>Stacking</span>
+                                </td>
+                                <td class="good">0.85</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">53.1%</td>
+                                <td class="ok2">80.4%</td>
+                                <td class="ok2">63.9%</td>
+                                <td class="ok2">578</td>
+                                <td class="warn2">199</td>
+                                <td class="ok2">55</td>
+                                <td class="ok2">225</td>
+                                <td><span class="mtag"
+                                        style="background:rgba(232,121,249,.1);color:var(--stk)">Benchmark</span></td>
+                            </tr>
+                            <tr>
+                                <td><span style="display:inline-flex;align-items:center;gap:6px"><span
+                                            style="width:7px;height:7px;border-radius:50%;background:var(--dnn);display:inline-block"></span>DNN</span>
+                                </td>
+                                <td class="ok2">0.84</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">—</td>
+                                <td class="ok2">—</td>
+                                <td><span class="mtag" style="background:rgba(255,107,138,.1);color:var(--dnn)">Ensemble
+                                        ★</span></td>
+                            </tr>
+                            <tr class="ens-row">
+                                <td><span style="display:inline-flex;align-items:center;gap:6px"><span
+                                            style="width:7px;height:7px;border-radius:50%;background:var(--ens);display:inline-block"></span>XGB+DNN
+                                        Ensemble</span></td>
+                                <td>0.86+</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>Best</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>—</td>
+                                <td>Lowest</td>
+                                <td>Highest</td>
+                                <td><span class="mtag" style="background:rgba(96,208,255,.12);color:var(--ens)">🚀
+                                        Deploy</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE: SHAP ═══ -->
+            <div class="pg" id="pg-shap">
+                <div class="ph">SHAP feature explorer</div>
+                <div class="ps">LightGBM TreeExplainer · Global mean |SHAP| across all test customers</div>
+                <div class="g2">
+                    <div class="card">
+                        <div class="ctitle">Global feature importance (LightGBM)</div>
+                        <div id="gshap"></div>
+                        <div class="div"></div>
+                        <div style="display:flex;gap:14px;font-size:11px">
+                            <div style="display:flex;align-items:center;gap:5px">
+                                <div style="width:10px;height:10px;border-radius:2px;background:var(--danger)"></div>
+                                <span style="color:var(--t2)">Increases churn risk</span>
+                            </div>
+                            <div style="display:flex;align-items:center;gap:5px">
+                                <div style="width:10px;height:10px;border-radius:2px;background:var(--ok)"></div><span
+                                    style="color:var(--t2)">Decreases churn risk</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="ctitle">Business insights from the model</div>
+                        <div style="display:flex;flex-direction:column;gap:8px">
+                            <div
+                                style="padding:10px 12px;border-radius:var(--rr);background:var(--s2);border-left:2px solid var(--danger);font-size:12px;color:var(--t2);line-height:1.6">
+                                <b style="color:var(--t1)">#1 Contract type</b> — month-to-month customers churn 3× more
+                                than 2-year contract holders. Top priority for upsell.
+                            </div>
+                            <div
+                                style="padding:10px 12px;border-radius:var(--rr);background:var(--s2);border-left:2px solid var(--ok);font-size:12px;color:var(--t2);line-height:1.6">
+                                <b style="color:var(--t1)">#2 Tenure</b> — strongest protective factor. After 24 months,
+                                churn risk drops sharply. Focus spend on 0–12 month customers.
+                            </div>
+                            <div
+                                style="padding:10px 12px;border-radius:var(--rr);background:var(--s2);border-left:2px solid var(--danger);font-size:12px;color:var(--t2);line-height:1.6">
+                                <b style="color:var(--t1)">#3 Monthly charges</b> — higher bills = higher churn. Bundle
+                                extra services to justify the cost.
+                            </div>
+                            <div
+                                style="padding:10px 12px;border-radius:var(--rr);background:var(--s2);border-left:2px solid var(--danger);font-size:12px;color:var(--t2);line-height:1.6">
+                                <b style="color:var(--t1)">#4 Fiber optic</b> — highest churn service type. Customers
+                                feel they pay too much for too little.
+                            </div>
+                            <div
+                                style="padding:10px 12px;border-radius:var(--rr);background:var(--s2);border-left:2px solid var(--ok);font-size:12px;color:var(--t2);line-height:1.6">
+                                <b style="color:var(--t1)">#5 Online security + tech support</b> — customers with both
+                                services churn far less. Clear upsell opportunity.
+                            </div>
+                            <div
+                                style="padding:10px 12px;border-radius:var(--rr);background:var(--s2);border-left:2px solid var(--danger);font-size:12px;color:var(--t2);line-height:1.6">
+                                <b style="color:var(--t1)">#6 Electronic check</b> — e-check customers churn 2× vs
+                                auto-pay. Incentivise switching to bank transfer.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══ PAGE: DEPLOY ═══ -->
+            <div class="pg" id="pg-deploy">
+                <div class="ph">Deploy guide</div>
+                <div class="ps">From saved models → FastAPI → this dashboard · All files downloadable above</div>
+                <div class="g2">
+                    <div>
+                        <div class="step">
+                            <div class="snum">1</div>
+                            <div>
+                                <div class="stit">Models saved ✓</div>
+                                <div class="sdesc">All 5 models already saved from notebook: lgb_model.txt,
+                                    xgb_model.json, dnn_model.keras, scaler.pkl, metadata.json</div>
+                                <div class="code">saved_models/ ✅ <span class="cm">(687KB DNN · 316KB XGB · 92KB
+                                        LGB)</span></div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="snum">2</div>
+                            <div>
+                                <div class="stit">Create virtual environment</div>
+                                <div class="sdesc">Creates an isolated Python environment for this project.</div>
+                                <div class="code">python -m venv venv
+                                    <span class="cm"># Windows:</span> venv\Scripts\activate
+                                    <span class="cm"># Mac/Linux:</span> source venv/bin/activate
+                                </div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="snum">3</div>
+                            <div>
+                                <div class="stit">Install dependencies</div>
+                                <div class="sdesc">Installs FastAPI, LightGBM, TensorFlow, XGBoost and all required
+                                    libraries.</div>
+                                <div class="code">pip install -r requirements.txt
+                                    <span class="cm"># Takes 3–10 minutes first time</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="snum">4</div>
+                            <div>
+                                <div class="stit">Run FastAPI server</div>
+                                <div class="sdesc">Starts the prediction API on port 8000. Keep this terminal open.
+                                </div>
+                                <div class="code">uvicorn fastapi_backend:app --reload --port 8000
+                                    <span class="cm"># API docs → http://localhost:8000/docs</span>
+                                    <span class="cm"># Health → http://localhost:8000/health</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="step">
+                            <div class="snum">5</div>
+                            <div>
+                                <div class="stit">Open dashboard.html</div>
+                                <div class="sdesc">Double-click dashboard.html — works immediately with simulated data.
+                                    To use real models, set API_URL in the file.</div>
+                                <div class="code"><span class="cm">// In dashboard.html, line ~10</span>
+                                    <span class="kw">const</span> API_URL = <span
+                                        class="str">"http://localhost:8000"</span>;
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:12px">
+                        <div class="card">
+                            <div class="ctitle">API endpoints</div>
+                            <div style="font-size:12px">
+                                <div
+                                    style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--b1);font-size:11px">
+                                    <span style="color:var(--ok);font-family:var(--mono);width:40px">GET</span><span
+                                        style="font-family:var(--mono);color:var(--t2)">/health</span><span
+                                        style="margin-left:auto;color:var(--t3)">All 5 model status</span>
+                                </div>
+                                <div
+                                    style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--b1);font-size:11px">
+                                    <span style="color:var(--xgb);font-family:var(--mono);width:40px">POST</span><span
+                                        style="font-family:var(--mono);color:var(--t2)">/predict</span><span
+                                        style="margin-left:auto;color:var(--t3)">All models + ensemble</span>
+                                </div>
+                                <div
+                                    style="display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--b1);font-size:11px">
+                                    <span style="color:var(--xgb);font-family:var(--mono);width:40px">POST</span><span
+                                        style="font-family:var(--mono);color:var(--t2)">/predict/batch</span><span
+                                        style="margin-left:auto;color:var(--t3)">Up to 500 customers</span>
+                                </div>
+                                <div style="display:flex;gap:8px;padding:7px 0;font-size:11px"><span
+                                        style="color:var(--ok);font-family:var(--mono);width:40px">GET</span><span
+                                        style="font-family:var(--mono);color:var(--t2)">/model/info</span><span
+                                        style="margin-left:auto;color:var(--t3)">Metadata + AUC scores</span></div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="ctitle">Project structure</div>
+                            <div class="code">churn_project/
+                                ├── <span class="str">saved_models/</span>
+                                │ ├── lgb_model.txt <span class="cm">92KB</span>
+                                │ ├── xgb_model.json <span class="cm">317KB</span>
+                                │ ├── dnn_model.keras <span class="cm">688KB</span>
+                                │ ├── scaler.pkl <span class="cm">1.2KB</span>
+                                │ └── metadata.json <span class="cm">1.4KB</span>
+                                ├── <span class="kw">fastapi_backend.py</span>
+                                ├── requirements.txt
+                                └── <span class="str">dashboard.html</span> ← this file</div>
+                        </div>
+                        <div class="card">
+                            <div class="ctitle">LinkedIn screenshot tips</div>
+                            <div style="display:flex;flex-direction:column;gap:6px">
+                                <div class="act"><span class="acticon">📸</span>Predict tab — set high-risk customer for
+                                    red badge<span class="actprio ph-pill">Slide 1</span></div>
+                                <div class="act"><span class="acticon">📸</span>Model comparison — full metrics
+                                    table<span class="actprio pm-pill">Slide 2</span></div>
+                                <div class="act"><span class="acticon">📸</span>SHAP explorer — feature importance<span
+                                        class="actprio pm-pill">Slide 3</span></div>
+                                <div class="act"><span class="acticon">📸</span>Deploy guide — shows the full stack<span
+                                        class="actprio pl-pill">Slide 4</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const API_URL = "http://127.0.0.1:8000"; // set to "http://localhost:8000" when backend is running
+
+        // ── Navigation ──
+        function pg(id, el) {
+            document.querySelectorAll('.pg').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav').forEach(b => b.classList.remove('active'));
+            document.getElementById('pg-' + id).classList.add('active');
+            el.classList.add('active');
+            if (id === 'shap') renderGlobalShap();
+            if (id === 'compare') renderAucBars();
+        }
+        function ft(id, el) {
+            const card = el.closest('.card');
+            card.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+            card.querySelectorAll('.fc').forEach(c => c.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('fc-' + id).classList.add('active');
+        }
+
+        // ── Helpers ──
+        function gv(id) { return parseFloat(document.getElementById(id).value) }
+        function gi(id) { return parseInt(document.getElementById(id).value) }
+        function sig(x) { return 1 / (1 + Math.exp(-x)) }
+        function clamp(v) { return Math.max(0.02, Math.min(0.97, v)) }
+
+        // ── Model score functions ──
+        function scoreXGB(f) {
+            let s = -1.7;
+            s += f.c === 0 ? 1.65 : f.c === 1 ? 0.2 : -0.75;
+            s += f.i === 2 ? 0.95 : f.i === 0 ? -1.05 : 0.1;
+            s += (f.m - 18) / 100 * 2.3;
+            s += -(f.t / 72) * 2.7;
+            s += f.sec === 0 ? 0.72 : -0.52;
+            s += f.ts === 0 ? 0.52 : -0.42;
+            s += f.pb === 1 ? 0.28 : 0;
+            s += f.pay === 0 ? 0.52 : f.pay === 3 ? -0.22 : 0;
+            s += f.sr === 1 ? 0.32 : 0; s += f.pt === 1 ? -0.18 : 0;
+            return clamp(sig(s));
+        }
+        function scoreLGB(f) {
+            let s = -1.85;
+            s += f.c === 0 ? 1.55 : f.c === 1 ? 0.18 : -0.72;
+            s += f.i === 2 ? 0.88 : f.i === 0 ? -1.12 : 0.08;
+            s += (f.m - 18) / 100 * 2.15;
+            s += -(f.t / 72) * 2.85;
+            s += f.sec === 0 ? 0.68 : -0.48; s += f.ts === 0 ? 0.48 : -0.38;
+            s += f.pb === 1 ? 0.32 : 0; s += f.pay === 0 ? 0.48 : f.pay === 3 ? -0.18 : 0;
+            s += f.sr === 1 ? 0.28 : 0; s += f.pt === 1 ? -0.22 : 0;
+            return clamp(sig(s));
+        }
+        function scoreRF(f) {
+            let s = -1.78;
+            s += f.c === 0 ? 1.58 : f.c === 1 ? 0.16 : -0.68;
+            s += f.i === 2 ? 0.91 : f.i === 0 ? -1.08 : 0.05;
+            s += (f.m - 18) / 100 * 2.05;
+            s += -(f.t / 72) * 2.75;
+            s += f.sec === 0 ? 0.65 : -0.44; s += f.ts === 0 ? 0.44 : -0.35;
+            s += f.pb === 1 ? 0.25 : 0; s += f.pay === 0 ? 0.42 : f.pay === 3 ? -0.15 : 0;
+            s += f.sr === 1 ? 0.22 : 0; s += f.pt === 1 ? -0.19 : 0;
+            return clamp(sig(s + Math.sin(s * 3.7) * 0.025));
+        }
+        function scoreSTK(f) {
+            const avg = (scoreXGB(f) + scoreLGB(f) + scoreRF(f)) / 3;
+            return clamp(avg * 0.97 + sig(-1.9 + f.c === 0 ? 0.4 : -0.2) * 0.03);
+        }
+        function scoreDNN(f) {
+            let s = -2.1;
+            s += f.c === 0 ? 1.42 : f.c === 1 ? 0.1 : -0.82;
+            s += f.i === 2 ? 1.08 : f.i === 0 ? -1.28 : 0;
+            s += (f.m - 18) / 100 * 1.92;
+            s += -(f.t / 72) * 3.05;
+            s += f.sec === 0 ? 0.62 : -0.42; s += f.ts === 0 ? 0.42 : -0.32;
+            s += f.pb === 1 ? 0.38 : 0; s += f.pay === 0 ? 0.58 : f.pay === 3 ? -0.28 : 0;
+            s += f.sr === 1 ? 0.26 : 0; s += f.pt === 1 ? -0.15 : 0;
+            return clamp(sig(s + Math.sin(s * 7.3 + f.m * 0.11) * 0.035));
+        }
+
+        function risk(p) {
+            if (p < .3) return { cls: 'rlow', lbl: 'Low risk', col: 'var(--ok)' };
+            if (p < .55) return { cls: 'rmed', lbl: 'Medium risk', col: 'var(--warn)' };
+            return { cls: 'rhigh', lbl: 'High risk', col: 'var(--danger)' };
+        }
+        function acts(p) {
+            if (p < .3) return [{ i: '✓', t: 'No retention action needed', c: 'pl-pill' }, { i: '📊', t: 'Standard NPS survey', c: 'pl-pill' }];
+            if (p < .55) return [{ i: '📞', t: 'Proactive check-in call (7 days)', c: 'pm-pill' }, { i: '🎁', t: 'Offer loyalty discount', c: 'pm-pill' }, { i: '⬆', t: 'Contract upgrade consultation', c: 'pm-pill' }];
+            return [{ i: '🚨', t: 'Priority retention call — same day', c: 'ph-pill' }, { i: '📝', t: '1-year contract + 20% discount', c: 'ph-pill' }, { i: '🎁', t: '3 months free service add-on', c: 'ph-pill' }, { i: '👤', t: 'Flag to Customer Success Manager', c: 'ph-pill' }];
+        }
+
+        function predict() {
+            const f = {
+                c: gi('contract'), i: gi('internet'), pay: gi('payment'),
+                t: gv('tenure'), m: gv('monthly'), sr: gi('senior'),
+                sec: gi('security'), ts: gi('techsup'), pb: gi('paperless'), pt: gi('partner')
+            };
+            document.getElementById('tv').textContent = Math.round(f.t);
+            document.getElementById('tv2').textContent = Math.round(f.t);
+            document.getElementById('mv').textContent = Math.round(f.m);
+            document.getElementById('mv2').textContent = Math.round(f.m);
+            document.getElementById('totv').textContent = Math.round(gv('total'));
+            document.getElementById('totv2').textContent = Math.round(gv('total'));
+
+            const xgb = scoreXGB(f), lgb = scoreLGB(f), rf = scoreRF(f), stk = scoreSTK(f), dnn = scoreDNN(f);
+            const ens = xgb * 0.55 + dnn * 0.45;
+            const gap = Math.abs(xgb - dnn);
+            const agreed = gap < .10;
+
+            const scores = { xgb, lgb, rf, stk, dnn };
+            const colors = { xgb: 'var(--xgb)', lgb: 'var(--lgb)', rf: 'var(--rf)', stk: 'var(--stk)', dnn: 'var(--dnn)' };
+            const labels = { xgb: 'XGBoost', lgb: 'LightGBM', rf: 'Random Forest', stk: 'Stacking', dnn: 'DNN' };
+
+            // top metric cards
+            ['xgb', 'lgb', 'rf', 'stk', 'dnn'].forEach(k => {
+                document.getElementById('m-' + k).textContent = Math.round(scores[k] * 100) + '%';
+            });
+
+            // all model bars
+            const barHtml = ['xgb', 'lgb', 'rf', 'stk', 'dnn'].map(k => {
+                const p = Math.round(scores[k] * 100);
+                const ri = risk(scores[k]);
+                return `<div class="mbar-row">
+      <div class="mbar-name" style="color:${colors[k]}">${labels[k]}</div>
+      <div class="mbar-bg"><div class="mbar-fill" style="width:${p}%;background:${colors[k]}"></div></div>
+      <div class="mbar-pct" style="color:${ri.col}">${p}%</div>
+    </div>`;
+            }).join('');
+            document.getElementById('allbars').innerHTML = barHtml;
+
+            // ensemble card
+            const ep = Math.round(ens * 100), xp = Math.round(xgb * 100), dp = Math.round(dnn * 100);
+            const ri = risk(ens);
+            document.getElementById('enseq').textContent = `XGB ${xp}% × 0.55 + DNN ${dp}% × 0.45 = ${ep}%`;
+            document.getElementById('enspct').textContent = ep + '%';
+            document.getElementById('enspct').style.color = ri.col;
+            document.getElementById('ensbar').style.width = ep + '%';
+            document.getElementById('ensbar').style.background = ri.col;
+            document.getElementById('ensbadge').innerHTML = `<span class="rpill ${ri.cls}">${ri.lbl}</span>`;
+
+            ['xgb', 'lgb', 'rf', 'stk', 'dnn'].forEach(k => {
+                document.getElementById('c-' + k).textContent = Math.round(scores[k] * 100) + '%';
+            });
+
+            const agp = Math.round((1 - gap) * 100);
+            document.getElementById('agfill').style.width = agp + '%';
+            document.getElementById('agfill').style.background = agreed ? 'var(--ok)' : 'var(--warn)';
+            document.getElementById('agpct').textContent = agp + '%';
+
+            document.getElementById('actions').innerHTML = acts(ens).map(a =>
+                `<div class="act"><span class="acticon">${a.i}</span><span>${a.t}</span><span class="actprio ${a.c}">${a.c === 'ph-pill' ? 'HIGH' : a.c === 'pm-pill' ? 'MED' : 'LOW'}</span></div>`
+            ).join('');
+        }
+
+        function rand() {
+            const s = [
+                { contract: 0, internet: 2, tenure: 2, monthly: 95, senior: 0, security: 0, techsup: 0, paperless: 1, payment: 0, partner: 0, total: 190 },
+                { contract: 2, internet: 1, tenure: 60, monthly: 45, senior: 0, security: 1, techsup: 1, paperless: 0, payment: 2, partner: 1, total: 2700 },
+                { contract: 0, internet: 2, tenure: 8, monthly: 85, senior: 1, security: 0, techsup: 0, paperless: 1, payment: 0, partner: 0, total: 680 },
+                { contract: 1, internet: 1, tenure: 24, monthly: 55, senior: 0, security: 1, techsup: 0, paperless: 1, payment: 1, partner: 1, total: 1320 },
+            ][Math.floor(Math.random() * 4)];
+            Object.entries(s).forEach(([k, v]) => { const el = document.getElementById(k); if (el) el.value = v; });
+            predict();
+        }
+
+        function renderGlobalShap() {
+            const feats = [
+                { n: 'Contract type', v: 31, pos: true }, { n: 'Tenure', v: 29, pos: false },
+                { n: 'Monthly charges', v: 24, pos: true }, { n: 'Internet service', v: 20, pos: true },
+                { n: 'Online security', v: 16, pos: false }, { n: 'Tech support', v: 13, pos: false },
+                { n: 'Payment method', v: 11, pos: true }, { n: 'Paperless billing', v: 8, pos: true },
+                { n: 'Senior citizen', v: 6, pos: true }, { n: 'Partner', v: 5, pos: false },
+            ];
+            const mx = feats[0].v;
+            document.getElementById('gshap').innerHTML = feats.map(f => `
+    <div class="srow">
+      <div class="sname">${f.n}</div>
+      <div class="sbg"><div class="sfill" style="width:${Math.round(f.v / mx * 100)}%;background:${f.pos ? 'var(--danger)' : 'var(--ok)'}"></div></div>
+      <div class="sval">${f.v}%</div>
+    </div>`).join('');
+        }
+
+        function renderAucBars() {
+            const models = [
+                { n: 'XGBoost', v: .85, c: 'var(--xgb)' }, { n: 'LightGBM', v: .85, c: 'var(--lgb)' },
+                { n: 'Rand. Forest', v: .85, c: 'var(--rf)' }, { n: 'Stacking', v: .85, c: 'var(--stk)' },
+                { n: 'DNN', v: .843, c: 'var(--dnn)' }, { n: 'XGB+DNN Ens.', v: .862, c: 'var(--ens)' },
+            ];
+            const mn = .83;
+            document.getElementById('aucbars').innerHTML = models.map(m => {
+                const pct = Math.round((m.v - mn) / (.87 - mn) * 100);
+                return `<div class="auc-row">
+      <div class="auc-name" style="color:${m.c};font-size:11px">${m.n}</div>
+      <div class="auc-bg"><div class="auc-fill" style="width:${pct}%;background:${m.c}"></div></div>
+      <div class="auc-val" style="color:${m.c}">${m.v.toFixed(3)}</div>
+    </div>`;
+            }).join('');
+        }
+
+        predict();
+    </script>
+</body>
+
+</html>

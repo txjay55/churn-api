@@ -1,0 +1,66 @@
+{
+  "feature_names": [
+    "gender",
+    "SeniorCitizen",
+    "Partner",
+    "Dependents",
+    "tenure",
+    "PhoneService",
+    "MultipleLines",
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies",
+    "PaperlessBilling",
+    "MonthlyCharges",
+    "TotalCharges",
+    "InternetService_DSL",
+    "InternetService_Fiber optic",
+    "InternetService_No",
+    "Contract_Month-to-month",
+    "Contract_One year",
+    "Contract_Two year",
+    "PaymentMethod_Bank transfer (automatic)",
+    "PaymentMethod_Credit card (automatic)",
+    "PaymentMethod_Electronic check",
+    "PaymentMethod_Mailed check",
+    "ChargesPerMonth",
+    "IsLongTenure",
+    "HighMonthlyCharge"
+  ],
+  "num_cols": [
+    "tenure",
+    "MonthlyCharges",
+    "TotalCharges",
+    "SeniorCitizen",
+    "ChargesPerMonth"
+  ],
+  "best_threshold": 0.5200000000000002,
+  "lgb_weight": 0.55,
+  "dnn_weight": 0.45,
+  "model_auc": {
+    "lgb": 0.848,
+    "dnn": 0.808,
+    "ensemble": 0.830
+  },
+  "binary_cols": [
+    "Partner",
+    "Dependents",
+    "PhoneService",
+    "PaperlessBilling",
+    "MultipleLines",
+    "OnlineSecurity",
+    "OnlineBackup",
+    "DeviceProtection",
+    "TechSupport",
+    "StreamingTV",
+    "StreamingMovies"
+  ],
+  "multi_cat_cols": [
+    "InternetService",
+    "Contract",
+    "PaymentMethod"
+  ]
+}
