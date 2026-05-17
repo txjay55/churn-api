@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+lightgbm
+tensorflow-cpu
+xgboost
+scikit-learn==1.7.2
+shap
+pandas
+numpy
+joblib
+python-multipart
