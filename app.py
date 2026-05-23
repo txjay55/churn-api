@@ -16,6 +16,16 @@ import json
 import os
 import lightgbm as lgb
 import keras
+from keras import layers as keras_layers
+
+# ── Compatibility patch — fixes quantization_config error ────
+_orig_dense = keras_layers.Dense.from_config.__func__
+@classmethod
+def _fixed_dense(cls, config):
+    config.pop('quantization_config', None)
+    return _orig_dense(cls, config)
+keras_layers.Dense.from_config = _fixed_dense
+# ─────────────────────────────────────────────────────────────
 
 # ── Load models & metadata ───────────────────────────────────
 SAVE_DIR = "saved_models"
@@ -40,11 +50,11 @@ with open(f"{SAVE_DIR}/metadata.json") as f:
     meta = json.load(f)
 
 # ── From your exact metadata.json ────────────────────────────
-FEATURE_NAMES = meta["feature_names"]   # 29 features
-NUM_COLS      = meta["num_cols"]        # ["tenure","MonthlyCharges","TotalCharges","SeniorCitizen","ChargesPerMonth"]
-THRESHOLD     = meta["best_threshold"]  # 0.52
-LGB_W         = meta["lgb_weight"]     # 0.55
-DNN_W         = meta["dnn_weight"]     # 0.45
+FEATURE_NAMES = meta["feature_names"]
+NUM_COLS      = meta["num_cols"]
+THRESHOLD     = meta["best_threshold"]
+LGB_W         = meta["lgb_weight"]
+DNN_W         = meta["dnn_weight"]
 
 print("✅ All models loaded!")
 print(f"   Features  : {len(FEATURE_NAMES)}")
@@ -65,15 +75,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ── Request schema — matches your 29 feature_names exactly ───
+# ── Request schema ────────────────────────────────────────────
 class CustomerInput(BaseModel):
-    # Basic
-    gender: int              = Field(0, ge=0, le=1,   description="0=Female 1=Male")
+    gender: int              = Field(0, ge=0, le=1, description="0=Female 1=Male")
     SeniorCitizen: int       = Field(0, ge=0, le=1)
     Partner: int             = Field(0, ge=0, le=1)
     Dependents: int          = Field(0, ge=0, le=1)
     tenure: float            = Field(1, ge=0, le=72)
-    # Services
     PhoneService: int        = Field(1, ge=0, le=1)
     MultipleLines: int       = Field(0, ge=0, le=1)
     OnlineSecurity: int      = Field(0, ge=0, le=1)
@@ -82,19 +90,15 @@ class CustomerInput(BaseModel):
     TechSupport: int         = Field(0, ge=0, le=1)
     StreamingTV: int         = Field(0, ge=0, le=1)
     StreamingMovies: int     = Field(0, ge=0, le=1)
-    # Billing
     PaperlessBilling: int    = Field(0, ge=0, le=1)
     MonthlyCharges: float    = Field(29.85, ge=0, le=200)
     TotalCharges: float      = Field(29.85, ge=0)
-    # Internet service (one-hot — pick one)
     InternetService_DSL: int             = Field(0, ge=0, le=1)
     InternetService_Fiber_optic: int     = Field(0, ge=0, le=1)
     InternetService_No: int              = Field(1, ge=0, le=1)
-    # Contract (one-hot — pick one)
     Contract_Month_to_month: int         = Field(1, ge=0, le=1)
     Contract_One_year: int               = Field(0, ge=0, le=1)
     Contract_Two_year: int               = Field(0, ge=0, le=1)
-    # Payment (one-hot — pick one)
     PaymentMethod_Bank_transfer: int     = Field(0, ge=0, le=1)
     PaymentMethod_Credit_card: int       = Field(0, ge=0, le=1)
     PaymentMethod_Electronic_check: int  = Field(1, ge=0, le=1)
@@ -102,47 +106,38 @@ class CustomerInput(BaseModel):
 
 
 def build_feature_df(c: CustomerInput) -> pd.DataFrame:
-    """
-    Map request fields → exact feature_names from metadata.json.
-    Column names with spaces/dashes must be matched carefully.
-    """
     row = {
-        "gender"                             : c.gender,
-        "SeniorCitizen"                      : c.SeniorCitizen,
-        "Partner"                            : c.Partner,
-        "Dependents"                         : c.Dependents,
-        "tenure"                             : c.tenure,
-        "PhoneService"                       : c.PhoneService,
-        "MultipleLines"                      : c.MultipleLines,
-        "OnlineSecurity"                     : c.OnlineSecurity,
-        "OnlineBackup"                       : c.OnlineBackup,
-        "DeviceProtection"                   : c.DeviceProtection,
-        "TechSupport"                        : c.TechSupport,
-        "StreamingTV"                        : c.StreamingTV,
-        "StreamingMovies"                    : c.StreamingMovies,
-        "PaperlessBilling"                   : c.PaperlessBilling,
-        "MonthlyCharges"                     : c.MonthlyCharges,
-        "TotalCharges"                       : c.TotalCharges,
-        # ── These names must match metadata exactly (spaces/dashes) ──
-        "InternetService_DSL"                : c.InternetService_DSL,
-        "InternetService_Fiber optic"        : c.InternetService_Fiber_optic,
-        "InternetService_No"                 : c.InternetService_No,
-        "Contract_Month-to-month"            : c.Contract_Month_to_month,
-        "Contract_One year"                  : c.Contract_One_year,
-        "Contract_Two year"                  : c.Contract_Two_year,
-        "PaymentMethod_Bank transfer (automatic)": c.PaymentMethod_Bank_transfer,
-        "PaymentMethod_Credit card (automatic)"  : c.PaymentMethod_Credit_card,
-        "PaymentMethod_Electronic check"     : c.PaymentMethod_Electronic_check,
-        "PaymentMethod_Mailed check"         : c.PaymentMethod_Mailed_check,
-        # ── Engineered features ──
-        "ChargesPerMonth"                    : c.TotalCharges / (c.tenure + 1),
-        "IsLongTenure"                       : int(c.tenure > 24),
-        "HighMonthlyCharge"                  : int(c.MonthlyCharges > 64.76),
+        "gender"                                  : c.gender,
+        "SeniorCitizen"                           : c.SeniorCitizen,
+        "Partner"                                 : c.Partner,
+        "Dependents"                              : c.Dependents,
+        "tenure"                                  : c.tenure,
+        "PhoneService"                            : c.PhoneService,
+        "MultipleLines"                           : c.MultipleLines,
+        "OnlineSecurity"                          : c.OnlineSecurity,
+        "OnlineBackup"                            : c.OnlineBackup,
+        "DeviceProtection"                        : c.DeviceProtection,
+        "TechSupport"                             : c.TechSupport,
+        "StreamingTV"                             : c.StreamingTV,
+        "StreamingMovies"                         : c.StreamingMovies,
+        "PaperlessBilling"                        : c.PaperlessBilling,
+        "MonthlyCharges"                          : c.MonthlyCharges,
+        "TotalCharges"                            : c.TotalCharges,
+        "InternetService_DSL"                     : c.InternetService_DSL,
+        "InternetService_Fiber optic"             : c.InternetService_Fiber_optic,
+        "InternetService_No"                      : c.InternetService_No,
+        "Contract_Month-to-month"                 : c.Contract_Month_to_month,
+        "Contract_One year"                       : c.Contract_One_year,
+        "Contract_Two year"                       : c.Contract_Two_year,
+        "PaymentMethod_Bank transfer (automatic)" : c.PaymentMethod_Bank_transfer,
+        "PaymentMethod_Credit card (automatic)"   : c.PaymentMethod_Credit_card,
+        "PaymentMethod_Electronic check"          : c.PaymentMethod_Electronic_check,
+        "PaymentMethod_Mailed check"              : c.PaymentMethod_Mailed_check,
+        "ChargesPerMonth"                         : c.TotalCharges / (c.tenure + 1),
+        "IsLongTenure"                            : int(c.tenure > 24),
+        "HighMonthlyCharge"                       : int(c.MonthlyCharges > 64.76),
     }
-
-    df = pd.DataFrame([row])[FEATURE_NAMES]   # enforce exact column order
-
-    # Scale numerical columns
+    df = pd.DataFrame([row])[FEATURE_NAMES]
     df[NUM_COLS] = scaler.transform(df[NUM_COLS])
     return df
 
