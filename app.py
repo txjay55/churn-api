@@ -15,7 +15,7 @@ import joblib
 import json
 import os
 import lightgbm as lgb
-from tensorflow import keras
+import keras
 
 # ── Load models & metadata ───────────────────────────────────
 SAVE_DIR = "saved_models"
@@ -23,7 +23,7 @@ SAVE_DIR = "saved_models"
 print("⏳ Loading models...")
 
 lgb_model  = lgb.Booster(model_file=f"{SAVE_DIR}/lgb_model.txt")
-dnn_model  = keras.models.load_model(f"{SAVE_DIR}/dnn_model.keras")
+dnn_model  = keras.models.load_model(f"{SAVE_DIR}/dnn_model.keras", compile=False)
 scaler     = joblib.load(f"{SAVE_DIR}/scaler.pkl")
 
 # Load SHAP explainer if available
