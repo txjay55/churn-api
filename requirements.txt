@@ -1,9 +1,9 @@
 fastapi
 uvicorn
 lightgbm
-tensorflow-cpu
+tensorflow-cpu==2.15.0
 xgboost
-scikit-learn==1.7.2
+scikit-learn
 shap
 pandas
 numpy
